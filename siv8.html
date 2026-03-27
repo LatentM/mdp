@@ -1,0 +1,1156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SIWSA | Enterprise App</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      :root {
+        --bg-color: #0b1121;
+        --glass-bg: rgba(30, 41, 59, 0.7);
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --accent: #38bdf8;
+        --success: #10b981;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Plus Jakarta Sans", sans-serif;
+      }
+      body {
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        padding: 2rem;
+        background-image:
+          radial-gradient(
+            circle at top right,
+            rgba(56, 189, 248, 0.1),
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at bottom left,
+            rgba(139, 92, 246, 0.1),
+            transparent 40%
+          );
+        min-height: 100vh;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--glass-border);
+      }
+      h1 {
+        font-size: 2rem;
+        font-weight: 800;
+        background: linear-gradient(to right, #e0f2fe, #38bdf8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        transition: transform 0.2s;
+      }
+      .btn {
+        background: var(--accent);
+        color: #0f172a;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn:hover {
+        background: #7dd3fc;
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        background: #334155;
+        color: #94a3b8;
+      }
+      .btn-outline {
+        background: transparent;
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        width: 100%;
+        margin-top: 1rem;
+      }
+      .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--glass-border);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--danger);
+      }
+      .connected .indicator {
+        background: var(--success);
+        box-shadow: 0 0 10px var(--success);
+      }
+      .section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 2.5rem 0 1rem 0;
+        color: #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+      }
+      .grid-4 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 1.5rem;
+      }
+      .sensor-val {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin: 0.5rem 0;
+        color: #fff;
+      }
+      .unit {
+        font-size: 1rem;
+        color: var(--text-muted);
+        font-weight: 500;
+      }
+      .label {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .input-group label {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+      }
+      .input-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+      .min-max-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.25rem;
+      }
+      select,
+      input[type="text"],
+      input[type="number"] {
+        width: 100%;
+        padding: 0.75rem;
+        border-radius: 8px;
+        border: 1px solid #334155;
+        background: rgba(15, 23, 42, 0.8);
+        color: white;
+        outline: none;
+      }
+      input:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+      }
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #334155;
+        transition: 0.3s;
+        border-radius: 34px;
+      }
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.3s;
+        border-radius: 50%;
+      }
+      input:checked + .slider {
+        background-color: var(--accent);
+      }
+      input:checked + .slider:before {
+        transform: translateX(20px);
+      }
+      input:disabled + .slider {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .flex-between {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .status-on {
+        color: var(--success);
+        text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+      }
+      .status-off {
+        color: var(--danger);
+      }
+      .status-moving {
+        color: var(--warning);
+        text-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+      }
+
+      /* ── History ── */
+      .history-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+      .history-toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+      .btn-sm {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s;
+      }
+      .btn-danger {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--danger);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+      .btn-danger:hover {
+        background: rgba(239, 68, 68, 0.3);
+      }
+      .btn-export {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+      .btn-export:hover {
+        background: rgba(16, 185, 129, 0.3);
+      }
+      .history-status {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .history-status .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--text-muted);
+      }
+      .history-status.saving .dot {
+        background: var(--warning);
+        box-shadow: 0 0 6px var(--warning);
+        animation: pulse 1s infinite;
+      }
+      .history-status.saved .dot {
+        background: var(--success);
+        box-shadow: 0 0 6px var(--success);
+      }
+      .history-status.error .dot {
+        background: var(--danger);
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+      .table-wrap {
+        overflow-x: auto;
+        border-radius: 12px;
+        border: 1px solid var(--glass-border);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+        min-width: 900px;
+      }
+      thead tr {
+        background: rgba(56, 189, 248, 0.08);
+        border-bottom: 1px solid var(--glass-border);
+      }
+      thead th {
+        padding: 0.75rem 0.9rem;
+        text-align: left;
+        color: var(--accent);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+      }
+      tbody tr {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        transition: background 0.15s;
+      }
+      tbody tr:hover {
+        background: rgba(56, 189, 248, 0.05);
+      }
+      tbody tr:last-child {
+        border-bottom: none;
+      }
+      tbody td {
+        padding: 0.65rem 0.9rem;
+        color: var(--text-main);
+        white-space: nowrap;
+      }
+      tbody td.muted {
+        color: var(--text-muted);
+      }
+      .badge-on {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--success);
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 0.75rem;
+      }
+      .badge-off {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--danger);
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 0.75rem;
+      }
+      .badge-mov {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--warning);
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 0.75rem;
+      }
+      .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-muted);
+      }
+      .empty-state .icon {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      /* Key notice banner */
+      #key-notice {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.875rem;
+        color: var(--warning);
+      }
+      #key-notice.hidden {
+        display: none;
+      }
+      #key-notice code {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+      }
+      #key-notice a {
+        color: var(--warning);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>SIWSA Hub</h1>
+        <p style="color: var(--text-muted)">
+          Enterprise Crop Automation Platform
+        </p>
+      </div>
+      <div class="flex-between" style="gap: 1rem">
+        <div id="connectionStatus" class="status-badge">
+          <div class="indicator"></div>
+          Disconnected
+        </div>
+        <button id="connectBtn" class="btn">Connect System</button>
+      </div>
+    </header>
+
+    <div class="grid-2">
+      <div class="card" style="border-top: 3px solid var(--accent)">
+        <div class="flex-between" style="margin-bottom: 1.5rem">
+          <div class="label" style="color: var(--accent)">
+            Smart Crop Profiling
+          </div>
+          <div
+            class="status-badge"
+            style="
+              background: rgba(56, 189, 248, 0.1);
+              border: none;
+              color: var(--accent);
+            "
+            id="active-crop-badge"
+          >
+            Active: Tomato
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Select Preset Profile</label>
+          <div style="display: flex; gap: 0.5rem">
+            <select id="crop-selector" style="flex: 1">
+              <option value="Tomato">Tomato (Heat Tolerant)</option>
+              <option value="Lettuce">Lettuce (Cool Season)</option>
+              <option value="Bamboo">Bamboo (High Humidity)</option>
+              <option value="Custom">Custom Configuration...</option>
+            </select>
+            <input
+              type="text"
+              id="custom-name"
+              placeholder="Enter Crop Name"
+              style="display: none; flex: 1"
+            />
+          </div>
+        </div>
+        <div class="input-row">
+          <div class="input-group">
+            <label>Light (Lux)</label>
+            <div class="min-max-grid">
+              <input
+                type="number"
+                id="th-light-min"
+                placeholder="Min"
+                disabled
+              />
+              <input
+                type="number"
+                id="th-light-max"
+                placeholder="Max"
+                disabled
+              />
+            </div>
+          </div>
+          <div class="input-group">
+            <label>Air Temp (°C)</label>
+            <div class="min-max-grid">
+              <input type="number" id="th-air-min" placeholder="Min" disabled />
+              <input type="number" id="th-air-max" placeholder="Max" disabled />
+            </div>
+          </div>
+          <div class="input-group">
+            <label>Humidity (%)</label>
+            <div class="min-max-grid">
+              <input type="number" id="th-hum-min" placeholder="Min" disabled />
+              <input type="number" id="th-hum-max" placeholder="Max" disabled />
+            </div>
+          </div>
+          <div class="input-group">
+            <label>Soil Moisture (%)</label>
+            <div class="min-max-grid">
+              <input
+                type="number"
+                id="th-soilM-min"
+                placeholder="Min"
+                disabled
+              />
+              <input
+                type="number"
+                id="th-soilM-max"
+                placeholder="Max"
+                disabled
+              />
+            </div>
+          </div>
+        </div>
+        <button id="syncProfileBtn" class="btn btn-outline">
+          Sync Profile to Hardware
+        </button>
+      </div>
+
+      <div class="card" style="border-top: 3px solid #8b5cf6">
+        <div class="flex-between" style="margin-bottom: 1.5rem">
+          <div class="label" style="color: #c4b5fd">
+            Actuator Control Center
+          </div>
+          <div
+            class="status-badge"
+            id="mode-badge"
+            style="
+              background: rgba(16, 185, 129, 0.1);
+              border: none;
+              color: var(--success);
+            "
+          >
+            AUTO MODE
+          </div>
+        </div>
+        <div
+          class="card"
+          style="background: rgba(0, 0, 0, 0.2); margin-bottom: 1.5rem"
+        >
+          <div class="flex-between">
+            <div>
+              <div style="font-weight: 600">Manual Override</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted)">
+                Bypass SIWSA Logic
+              </div>
+            </div>
+            <label class="switch"
+              ><input type="checkbox" id="toggle-mode" /><span
+                class="slider"
+              ></span
+            ></label>
+          </div>
+        </div>
+        <div class="flex-between" style="margin-bottom: 1rem">
+          <div>
+            <div class="label">Irrigation Pump</div>
+            <div id="stat-pump" class="sensor-val" style="font-size: 1.5rem">
+              --
+            </div>
+          </div>
+          <label class="switch"
+            ><input type="checkbox" id="toggle-pump" disabled /><span
+              class="slider"
+            ></span
+          ></label>
+        </div>
+        <div class="flex-between" style="margin-bottom: 1rem">
+          <div>
+            <div class="label">Ventilation Fan</div>
+            <div id="stat-fan" class="sensor-val" style="font-size: 1.5rem">
+              --
+            </div>
+          </div>
+          <label class="switch"
+            ><input type="checkbox" id="toggle-fan" disabled /><span
+              class="slider"
+            ></span
+          ></label>
+        </div>
+        <div class="flex-between">
+          <div>
+            <div class="label">Shade Net Motor</div>
+            <div id="stat-shade" class="sensor-val" style="font-size: 1.5rem">
+              --
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.5rem">
+            <button
+              id="btn-shade-open"
+              class="btn"
+              style="padding: 0.5rem 1rem; font-size: 0.85rem"
+              disabled
+            >
+              OPEN
+            </button>
+            <button
+              id="btn-shade-close"
+              class="btn"
+              style="padding: 0.5rem 1rem; font-size: 0.85rem"
+              disabled
+            >
+              CLOSE
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">
+      Live Environment Telemetry
+      <span
+        id="last-update"
+        style="font-size: 0.8rem; font-weight: 400; color: var(--text-muted)"
+        >Awaiting Data...</span
+      >
+    </div>
+    <div class="grid-4">
+      <div class="card">
+        <div class="label">Air Temp</div>
+        <div class="sensor-val" id="val-temp">
+          --<span class="unit">°C</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="label">Humidity</div>
+        <div class="sensor-val" id="val-hum">--<span class="unit">%</span></div>
+      </div>
+      <div class="card">
+        <div class="label">Soil Moisture</div>
+        <div class="sensor-val" id="val-soil">
+          --<span class="unit">%</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="label">Water/Soil Temp</div>
+        <div class="sensor-val" id="val-watertemp">
+          --<span class="unit">°C</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="label">Light Intensity</div>
+        <div class="sensor-val" id="val-light">
+          --<span class="unit">Lux</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="label">UV Index</div>
+        <div class="sensor-val" id="val-uv">
+          --<span class="unit">mW/cm²</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="label">Pressure</div>
+        <div class="sensor-val" id="val-pressure">
+          --<span class="unit">kPa</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="label">Rain Level</div>
+        <div class="sensor-val" id="val-rain">
+          --<span class="unit">%</span>
+        </div>
+      </div>
+      <div class="card" style="border-left: 3px solid #f43f5e">
+        <div class="label">Leaf Temp (IR)</div>
+        <div class="sensor-val" id="val-irtemp">
+          --<span class="unit">°C</span>
+        </div>
+      </div>
+      <div class="card" style="border-left: 3px solid #8b5cf6">
+        <div class="label">VPD (Transpiration)</div>
+        <div class="sensor-val" id="val-vpd">
+          --<span class="unit">kPa</span>
+        </div>
+      </div>
+      <div class="card" style="border-left: 3px solid #3b82f6">
+        <div class="label">Dew Point</div>
+        <div class="sensor-val" id="val-dew">
+          --<span class="unit">°C</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- History Section -->
+    <div class="section-title">
+      Sensor History
+      <div class="history-status" id="history-status">
+        <div class="dot"></div>
+        <span>Idle</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="history-toolbar">
+        <div class="history-toolbar-left">
+          <button class="btn-sm btn-export" onclick="exportCSV()">
+            ⬇ Export CSV
+          </button>
+          <button class="btn-sm btn-danger" onclick="clearHistory()">
+            🗑 Clear History
+          </button>
+        </div>
+        <span
+          style="font-size: 0.8rem; color: var(--text-muted)"
+          id="history-count"
+          >0 records</span
+        >
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Crop</th>
+              <th>Air Temp</th>
+              <th>Humidity</th>
+              <th>Soil</th>
+              <th>Water Temp</th>
+              <th>Leaf Temp</th>
+              <th>Light (Lux)</th>
+              <th>UV</th>
+              <th>Pressure</th>
+              <th>Rain</th>
+              <th>VPD</th>
+              <th>Dew Pt</th>
+              <th>Pump</th>
+              <th>Fan</th>
+              <th>Shade</th>
+              <th>Mode</th>
+            </tr>
+          </thead>
+          <tbody id="history-body">
+            <tr>
+              <td colspan="17" class="empty-state">
+                <div class="icon">📡</div>
+                <div>Connect the system to start logging history</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      // ── SUPABASE CONFIG ────────────────────────────────────────────────────
+      const SUPABASE_URL = "https://zlequhryajurypkecmkc.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsZXF1aHJ5YWp1cnlwa2VjbWtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1MzU0ODUsImV4cCI6MjA5MDExMTQ4NX0.K5Z2c-8wBj3kjVV0gwngshQzWS4UzD5BM4q1emt8Qbk";
+      // ── Replace the line above with the anon JWT key from:
+      // ── Supabase Dashboard → Project Settings → API → anon public
+      // ──────────────────────────────────────────────────────────────────────
+
+      const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+      const CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
+
+      let bleChar = null;
+      let isManual = false;
+      let sbClient = null;
+      let lastSaveTime = 0;
+      const SAVE_INTERVAL_MS = 60 * 1000; // 1 minute
+      let historyRows = [];
+
+      // ── Supabase init ──────────────────────────────────────────────────────
+      function initSupabase() {
+        try {
+          sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+          loadHistory();
+        } catch (e) {
+          console.error("Supabase init failed:", e);
+          setStatus("error", "Supabase init failed");
+        }
+      }
+
+      function setStatus(state, msg) {
+        const el = document.getElementById("history-status");
+        el.className = "history-status " + state;
+        el.querySelector("span").textContent = msg;
+      }
+
+      async function saveToSupabase(data) {
+        if (!sbClient) return;
+        const now = Date.now();
+        if (now - lastSaveTime < SAVE_INTERVAL_MS) return;
+        lastSaveTime = now;
+        setStatus("saving", "Saving...");
+        const row = {
+          recorded_at: new Date().toISOString(),
+          crop: data.crop,
+          temperature: parseFloat(data.temperature),
+          humidity: parseFloat(data.humidity),
+          soil_moisture: parseFloat(data.soil_moisture),
+          water_temp: parseFloat(data.water_temp),
+          ir_temp: parseFloat(data.ir_temp),
+          light: parseFloat(data.light),
+          uv: parseFloat(data.uv),
+          pressure: parseFloat(data.pressure),
+          rain: parseFloat(data.rain),
+          vpd: parseFloat(data.vpd),
+          dew_point: parseFloat(data.dew_point),
+          pump_status: data.pump_status,
+          fan_status: data.fan_status,
+          shade_status: data.shade_status,
+          mode: data.mode,
+        };
+        const { error } = await sbClient.from("siwsa_history").insert([row]);
+        if (error) {
+          console.error("Insert error:", error);
+          setStatus("error", "Save failed: " + error.message);
+        } else {
+          setStatus("saved", "Saved " + new Date().toLocaleTimeString());
+          historyRows.unshift(row);
+          if (historyRows.length > 200) historyRows.pop();
+          renderHistory();
+        }
+      }
+
+      async function loadHistory() {
+        if (!sbClient) return;
+        setStatus("saving", "Loading...");
+        const { data, error } = await sbClient
+          .from("siwsa_history")
+          .select("*")
+          .order("recorded_at", { ascending: false })
+          .limit(200);
+        if (error) {
+          console.error("Supabase load error:", error);
+          setStatus("error", "Load failed: " + error.message);
+          return;
+        }
+        historyRows = data || [];
+        renderHistory();
+        setStatus("saved", "Loaded " + historyRows.length + " records");
+      }
+
+      function renderHistory() {
+        const tbody = document.getElementById("history-body");
+        document.getElementById("history-count").textContent =
+          historyRows.length + " records";
+        if (historyRows.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="17" class="empty-state"><div class="icon">📭</div><div>No history yet — data saves every minute while connected</div></td></tr>';
+          return;
+        }
+        const badge = (v) => {
+          if (v === "ON" || v === "OPEN")
+            return `<span class="badge-on">${v}</span>`;
+          if (v === "OFF" || v === "CLOSED")
+            return `<span class="badge-off">${v}</span>`;
+          return `<span class="badge-mov">${v ?? "--"}</span>`;
+        };
+        tbody.innerHTML = historyRows
+          .map((r) => {
+            const t = new Date(r.recorded_at);
+            return `<tr>
+                <td class="muted">${t.toLocaleDateString()} ${t.toLocaleTimeString()}</td>
+                <td>${r.crop ?? "--"}</td>
+                <td>${r.temperature ?? "--"} °C</td>
+                <td>${r.humidity ?? "--"} %</td>
+                <td>${r.soil_moisture ?? "--"} %</td>
+                <td>${r.water_temp ?? "--"} °C</td>
+                <td>${r.ir_temp ?? "--"} °C</td>
+                <td>${r.light ?? "--"}</td>
+                <td>${r.uv ?? "--"}</td>
+                <td>${r.pressure ?? "--"} kPa</td>
+                <td>${r.rain ?? "--"} %</td>
+                <td>${r.vpd ?? "--"}</td>
+                <td>${r.dew_point ?? "--"} °C</td>
+                <td>${badge(r.pump_status)}</td>
+                <td>${badge(r.fan_status)}</td>
+                <td>${badge(r.shade_status)}</td>
+                <td class="muted">${r.mode ?? "--"}</td>
+            </tr>`;
+          })
+          .join("");
+      }
+
+      async function clearHistory() {
+        if (!sbClient) {
+          alert("Supabase not configured yet.");
+          return;
+        }
+        if (
+          !confirm(
+            "Delete ALL history records from Supabase? This cannot be undone.",
+          )
+        )
+          return;
+        const { error } = await sbClient
+          .from("siwsa_history")
+          .delete()
+          .neq("id", 0);
+        if (error) {
+          alert("Delete failed: " + error.message);
+          return;
+        }
+        historyRows = [];
+        renderHistory();
+        setStatus("saved", "History cleared");
+      }
+
+      function exportCSV() {
+        if (historyRows.length === 0) {
+          alert("No history to export.");
+          return;
+        }
+        const headers = [
+          "recorded_at",
+          "crop",
+          "temperature",
+          "humidity",
+          "soil_moisture",
+          "water_temp",
+          "ir_temp",
+          "light",
+          "uv",
+          "pressure",
+          "rain",
+          "vpd",
+          "dew_point",
+          "pump_status",
+          "fan_status",
+          "shade_status",
+          "mode",
+        ];
+        const csv = [
+          headers.join(","),
+          ...historyRows.map((r) =>
+            headers.map((h) => JSON.stringify(r[h] ?? "")).join(","),
+          ),
+        ].join("\n");
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+        a.download =
+          "siwsa_history_" + new Date().toISOString().slice(0, 10) + ".csv";
+        a.click();
+      }
+
+      initSupabase();
+
+      // ── Crop DB ────────────────────────────────────────────────────────────
+      const cropDB = {
+        Tomato: {
+          maxL: 50000,
+          minL: 15000,
+          maxT: 29,
+          minT: 18,
+          maxH: 80,
+          minH: 50,
+          maxS: 80,
+          minS: 40,
+        },
+        Lettuce: {
+          maxL: 30000,
+          minL: 10000,
+          maxT: 24,
+          minT: 12,
+          maxH: 70,
+          minH: 40,
+          maxS: 75,
+          minS: 50,
+        },
+        Bamboo: {
+          maxL: 50000,
+          minL: 15000,
+          maxT: 32,
+          minT: 18,
+          maxH: 85,
+          minH: 60,
+          maxS: 75,
+          minS: 50,
+        },
+        Custom: {
+          maxL: 50000,
+          minL: 10000,
+          maxT: 29,
+          minT: 18,
+          maxH: 80,
+          minH: 50,
+          maxS: 80,
+          minS: 40,
+        },
+      };
+
+      const cropSel = document.getElementById("crop-selector");
+      const customNameInp = document.getElementById("custom-name");
+      const in_maxL = document.getElementById("th-light-max"),
+        in_minL = document.getElementById("th-light-min");
+      const in_maxT = document.getElementById("th-air-max"),
+        in_minT = document.getElementById("th-air-min");
+      const in_maxH = document.getElementById("th-hum-max"),
+        in_minH = document.getElementById("th-hum-min");
+      const in_maxS = document.getElementById("th-soilM-max"),
+        in_minS = document.getElementById("th-soilM-min");
+      const allInputs = [
+        in_maxL,
+        in_minL,
+        in_maxT,
+        in_minT,
+        in_maxH,
+        in_minH,
+        in_maxS,
+        in_minS,
+      ];
+
+      function loadCrop(name) {
+        const d = cropDB[name];
+        in_maxL.value = d.maxL;
+        in_minL.value = d.minL;
+        in_maxT.value = d.maxT;
+        in_minT.value = d.minT;
+        in_maxH.value = d.maxH;
+        in_minH.value = d.minH;
+        in_maxS.value = d.maxS;
+        in_minS.value = d.minS;
+        const isCustom = name === "Custom";
+        allInputs.forEach((i) => (i.disabled = !isCustom));
+        customNameInp.style.display = isCustom ? "block" : "none";
+      }
+      cropSel.addEventListener("change", (e) => loadCrop(e.target.value));
+      loadCrop("Tomato");
+
+      document
+        .getElementById("syncProfileBtn")
+        .addEventListener("click", () => {
+          let cropName =
+            cropSel.value === "Custom"
+              ? customNameInp.value || "Custom"
+              : cropSel.value;
+          const cmd = `CROP|${cropName}|${in_maxL.value}|${in_minL.value}|${in_maxT.value}|${in_minT.value}|${in_maxH.value}|${in_minH.value}|${in_maxS.value}|${in_minS.value}`;
+          sendCmd(cmd);
+          alert(`Profile "${cropName}" synced to hardware!`);
+        });
+
+      // ── BLE ────────────────────────────────────────────────────────────────
+      document
+        .getElementById("connectBtn")
+        .addEventListener("click", async () => {
+          try {
+            const device = await navigator.bluetooth.requestDevice({
+              filters: [{ name: "SIWSA-Premium" }],
+              optionalServices: [SERVICE_UUID],
+            });
+            const server = await device.gatt.connect();
+            bleChar = await (
+              await server.getPrimaryService(SERVICE_UUID)
+            ).getCharacteristic(CHARACTERISTIC_UUID);
+            await bleChar.startNotifications();
+            bleChar.addEventListener("characteristicvaluechanged", (e) => {
+              try {
+                updateUI(JSON.parse(new TextDecoder().decode(e.target.value)));
+              } catch (err) {}
+            });
+            document
+              .getElementById("connectionStatus")
+              .classList.add("connected");
+            document.getElementById("connectionStatus").innerHTML =
+              '<div class="indicator"></div>System Online';
+            sendCmd("getdata");
+          } catch (e) {
+            alert(
+              "Please ensure ESP32 is powered on and close to your device.",
+            );
+          }
+        });
+
+      async function sendCmd(cmd) {
+        if (bleChar) await bleChar.writeValue(new TextEncoder().encode(cmd));
+      }
+
+      const tMode = document.getElementById("toggle-mode");
+      const tPump = document.getElementById("toggle-pump");
+      const tFan = document.getElementById("toggle-fan");
+      const btnShadeOpen = document.getElementById("btn-shade-open");
+      const btnShadeClose = document.getElementById("btn-shade-close");
+
+      tMode.addEventListener("change", (e) => {
+        isManual = e.target.checked;
+        document.getElementById("mode-badge").innerText = isManual
+          ? "MANUAL OVERRIDE"
+          : "AUTO MODE";
+        document.getElementById("mode-badge").style.color = isManual
+          ? "var(--danger)"
+          : "var(--success)";
+        document.getElementById("mode-badge").style.background = isManual
+          ? "rgba(239,68,68,0.1)"
+          : "rgba(16,185,129,0.1)";
+        tPump.disabled = !isManual;
+        tFan.disabled = !isManual;
+        btnShadeOpen.disabled = !isManual;
+        btnShadeClose.disabled = !isManual;
+        sendCmd(isManual ? "manual" : "auto");
+      });
+      tPump.addEventListener("change", (e) =>
+        sendCmd(e.target.checked ? "pump_on" : "pump_off"),
+      );
+      tFan.addEventListener("change", (e) =>
+        sendCmd(e.target.checked ? "fan_on" : "fan_off"),
+      );
+      btnShadeOpen.addEventListener("click", () => sendCmd("shade_open"));
+      btnShadeClose.addEventListener("click", () => sendCmd("shade_close"));
+
+      // ── UI update + save ───────────────────────────────────────────────────
+      function updateUI(data) {
+        document.getElementById("val-temp").innerHTML =
+          `${data.temperature}<span class="unit">°C</span>`;
+        document.getElementById("val-hum").innerHTML =
+          `${data.humidity}<span class="unit">%</span>`;
+        document.getElementById("val-soil").innerHTML =
+          `${data.soil_moisture}<span class="unit">%</span>`;
+        document.getElementById("val-watertemp").innerHTML =
+          `${data.water_temp}<span class="unit">°C</span>`;
+        document.getElementById("val-light").innerHTML =
+          `${data.light}<span class="unit">Lux</span>`;
+        document.getElementById("val-pressure").innerHTML =
+          `${data.pressure}<span class="unit">kPa</span>`;
+        document.getElementById("val-rain").innerHTML =
+          `${data.rain}<span class="unit">%</span>`;
+        document.getElementById("val-uv").innerHTML =
+          `${data.uv}<span class="unit">mW</span>`;
+        document.getElementById("val-irtemp").innerHTML =
+          `${data.ir_temp}<span class="unit">°C</span>`;
+        document.getElementById("val-vpd").innerHTML =
+          `${data.vpd}<span class="unit">kPa</span>`;
+        document.getElementById("val-dew").innerHTML =
+          `${data.dew_point}<span class="unit">°C</span>`;
+        document.getElementById("active-crop-badge").innerText =
+          `Active: ${data.crop}`;
+        document.getElementById("last-update").innerText =
+          `Synced: ${data.time} - ${data.date}`;
+        const updateAct = (id, stat) => {
+          const el = document.getElementById(id);
+          el.innerText = stat;
+          if (stat === "ON" || stat === "OPEN")
+            el.className = "sensor-val status-on";
+          else if (stat === "OFF" || stat === "CLOSED")
+            el.className = "sensor-val status-off";
+          else if (stat === "MOVING") el.className = "sensor-val status-moving";
+        };
+        updateAct("stat-pump", data.pump_status);
+        updateAct("stat-fan", data.fan_status);
+        updateAct("stat-shade", data.shade_status);
+        if (!isManual) {
+          tPump.checked = data.pump_status === "ON";
+          tFan.checked = data.fan_status === "ON";
+        }
+        saveToSupabase(data);
+      }
+    </script>
+  </body>
+</html>
