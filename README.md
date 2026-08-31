@@ -5,4 +5,4 @@ Team Members:
 2. Mohammed Mubashir Hasan
 3. Tarun
 4. Kanishkk
-5. Durga DK
+5. Durgga DK
